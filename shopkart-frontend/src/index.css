@@ -1,0 +1,307 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@layer base {
+  :root {
+    --fk-blue: #2874f0;
+    --fk-blue-dark: #1a5ed8;
+    --fk-blue-light: #eaf0ff;
+    --fk-yellow: #FFE11A;
+    --fk-orange: #fb641b;
+    --fk-green: #388e3c;
+    --fk-red: #ff6161;
+    --fk-gray: #f1f3f6;
+    --fk-gray-dark: #878787;
+    --font-sans: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--fk-gray);
+    color: #212121;
+    min-height: 100vh;
+    margin: 0;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+/* ===== Flipkart-themed Utility Classes ===== */
+
+/* Navbar Blue */
+.fk-navbar {
+  background: linear-gradient(135deg, #2874f0 0%, #1a5ed8 100%);
+}
+
+/* Product Card */
+.fk-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.fk-card:hover {
+  box-shadow: 0 4px 20px rgba(40,116,240,0.15);
+  transform: translateY(-3px);
+}
+
+/* Primary Blue Button */
+.fk-btn-primary {
+  background: var(--fk-blue);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  border-radius: 4px;
+  border: none;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s;
+}
+
+.fk-btn-primary:hover {
+  background: var(--fk-blue-dark);
+  box-shadow: 0 4px 12px rgba(40,116,240,0.4);
+  transform: translateY(-1px);
+}
+
+/* Yellow "Buy Now" Button */
+.fk-btn-yellow {
+  background: var(--fk-yellow);
+  color: #212121;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 4px;
+  border: none;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s;
+}
+
+.fk-btn-yellow:hover {
+  background: #f5d500;
+  box-shadow: 0 4px 12px rgba(255,225,26,0.5);
+  transform: translateY(-1px);
+}
+
+/* Orange CTA Button */
+.fk-btn-orange {
+  background: var(--fk-orange);
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 4px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fk-btn-orange:hover {
+  background: #e85a15;
+  box-shadow: 0 4px 12px rgba(251,100,27,0.4);
+}
+
+/* Input Focus Style */
+.fk-input {
+  border: 1.5px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fff;
+  color: #212121;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.fk-input:focus {
+  border-color: var(--fk-blue);
+  box-shadow: 0 0 0 2px rgba(40,116,240,0.12);
+}
+
+/* Search Bar Yellow */
+.fk-search {
+  background: var(--fk-yellow);
+  border-radius: 0 4px 4px 0;
+}
+
+/* Badge */
+.fk-badge {
+  background: var(--fk-blue);
+  color: white;
+  border-radius: 12px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Price styling */
+.fk-price {
+  color: #212121;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.fk-mrp {
+  color: #878787;
+  font-size: 13px;
+  text-decoration: line-through;
+}
+
+.fk-discount {
+  color: var(--fk-green);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Rating chip */
+.fk-rating {
+  background: var(--fk-green);
+  color: white;
+  border-radius: 3px;
+  padding: 2px 5px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Category chip */
+.fk-category {
+  color: #878787;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Section header */
+.fk-section-title {
+  color: #212121;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Flipkart-style divider */
+.fk-divider {
+  height: 8px;
+  background: var(--fk-gray);
+}
+
+/* Toast Notification */
+.fk-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #323232;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 9999;
+  animation: toast-in 0.3s ease;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Shimmer Loading Effect */
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Banner animation */
+.hero-banner {
+  background: linear-gradient(135deg, #2874f0 0%, #1a5ed8 60%, #0d47a1 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-banner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: rgba(255,225,26,0.15);
+  border-radius: 50%;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  50% { transform: scale(1.1); opacity: 0.25; }
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease forwards;
+}
+
+/* Slide in from left */
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in {
+  animation: slide-in-left 0.4s ease forwards;
+}
+
+/* Wishlist heart animation */
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.heart-pop {
+  animation: heart-pop 0.3s ease;
+}
+
+/* Deal timer animation */
+@keyframes countdown-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.countdown-timer {
+  animation: countdown-blink 1s infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
