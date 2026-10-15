@@ -2,7 +2,8 @@
 const http = require('http');
 const crypto = require('crypto');
 
-const BASE_URL = 'http://localhost:5000';
+const PORT = process.env.PORT || 5001;
+const BASE_URL = `http://localhost:${PORT}`;
 
 function request(method, path, body = null, token = null) {
   return new Promise((resolve, reject) => {

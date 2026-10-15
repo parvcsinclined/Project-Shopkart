@@ -3,14 +3,17 @@
 
 const http = require('http');
 
-async function runTests() {
-  console.log('Testing Wishlist Backend APIs...');
+const PORT = parseInt(process.env.PORT, 10) || 5001;
 
-  const BASE_URL = 'http://localhost:5000';
+async function runTests() {
+  console.log(`Testing Wishlist Backend APIs on port ${PORT}...`);
+
+  const BASE_URL = `http://localhost:${PORT}`;
 
   const makeRequest = (options, data = null) => {
     return new Promise((resolve, reject) => {
-      const req = http.request(options, (res) => {
+      const finalOptions = { ...options, port: options.port === 5000 ? PORT : (options.port || PORT) };
+      const req = http.request(finalOptions, (res) => {
         let body = '';
         res.on('data', (chunk) => (body += chunk));
         res.on('end', () => {

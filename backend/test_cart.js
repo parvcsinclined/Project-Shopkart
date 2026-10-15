@@ -3,12 +3,15 @@
 
 const http = require('http');
 
+const PORT = parseInt(process.env.PORT, 10) || 5001;
+
 async function runCartTests() {
-  console.log('Testing Shopping Cart Backend APIs...');
+  console.log(`Testing Shopping Cart Backend APIs on port ${PORT}...`);
 
   const makeRequest = (options, data = null) => {
     return new Promise((resolve, reject) => {
-      const req = http.request(options, (res) => {
+      const finalOptions = { ...options, port: options.port === 5000 ? PORT : (options.port || PORT) };
+      const req = http.request(finalOptions, (res) => {
         let body = '';
         res.on('data', (chunk) => (body += chunk));
         res.on('end', () => {

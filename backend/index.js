@@ -27,11 +27,17 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/customers', customerRoutes);
-app.use('/products', productRoutes);
-app.use('/wishlist', wishlistRoutes);
-app.use('/cart', cartRoutes);
-app.use('/orders', orderRoutes);
+// Support both /api-prefixed routes (for unified Vercel multi-service routing) and root routes
+const registerRoutes = (prefix = '') => {
+  app.use(`${prefix}/customers`, customerRoutes);
+  app.use(`${prefix}/products`, productRoutes);
+  app.use(`${prefix}/wishlist`, wishlistRoutes);
+  app.use(`${prefix}/cart`, cartRoutes);
+  app.use(`${prefix}/orders`, orderRoutes);
+};
+
+registerRoutes('/api');
+registerRoutes('');
 
 const PORT = process.env.PORT || 5000;
 
@@ -70,3 +76,5 @@ connectDB()
       console.log(`Server running on port ${PORT}`);
     });
   });
+
+module.exports = app;
