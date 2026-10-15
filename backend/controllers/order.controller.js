@@ -140,41 +140,25 @@ exports.createPaymentOrder = async (req, res) => {
 
     // 5. Create Razorpay Order in paise (amount * 100)
     const amountInPaise = Math.round(calculatedTotal * 100);
-    let razorpayOrderId = '';
 
-    try {
-      const razorpayOrder = await razorpay.orders.create({
-        amount: amountInPaise,
-        currency: 'INR',
-        receipt: shopKartOrder._id.toString(),
-      });
-      razorpayOrderId = razorpayOrder.id;
-    } catch (rzpErr) {
-      console.warn('Razorpay order creation fallback (simulation mode):', rzpErr.message);
-      // In case of test credentials or mock test runner
-      razorpayOrderId = `order_test_${Date.now()}`;
-    }
+    const razorpayOrder = await razorpay.orders.create({
+      amount: amountInPaise,
+      currency: 'INR',
+      receipt: shopKartOrder._id.toString(),
+    });
 
     // 6. Save Razorpay Order ID to the ShopKart Order
-    shopKartOrder.razorpayOrderId = razorpayOrderId;
+    shopKartOrder.razorpayOrderId = razorpayOrder.id;
     await shopKartOrder.save();
 
-    // 7. Return safe checkout data to frontend
-    const isSimulated =
-      shopKartOrder.razorpayOrderId.startsWith('order_test_') ||
-      process.env.RAZORPAY_KEY_ID === 'rzp_test_shopkart10135' ||
-      !process.env.RAZORPAY_KEY_SECRET ||
-      process.env.RAZORPAY_KEY_SECRET.includes('placeholder') ||
-      process.env.RAZORPAY_KEY_SECRET.includes('lab06');
-
+    // 7. Return checkout data to frontend
     return res.status(201).json({
       success: true,
       shopKartOrderId: shopKartOrder._id,
-      razorpayOrderId: shopKartOrder.razorpayOrderId,
+      razorpayOrderId: razorpayOrder.id,
       amount: amountInPaise,
       currency: 'INR',
-      key: process.env.RAZORPAY_KEY_ID || 'rzp_test_shopkart10135',
-      isSimulated,
+      key: process.env.RAZORPAY_KEY_ID,
       order: shopKartOrder,
     });
   } catch (error) {
@@ -230,13 +214,11 @@ exports.verifyPayment = async (req, res) => {
     const body = `${trustedOrderId}|${razorpay_payment_id}`;
 
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'shopkart_secret_key_lab06')
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
       .update(body)
       .digest('hex');
 
-    const isSignatureValid =
-      expectedSignature === razorpay_signature ||
-      (razorpay_signature === 'simulated_test_signature' && trustedOrderId && trustedOrderId.startsWith('order_test_'));
+    const isSignatureValid = expectedSignature === razorpay_signature;
 
     if (!isSignatureValid) {
       // Payment signature verification failed

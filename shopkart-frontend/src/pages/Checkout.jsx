@@ -35,7 +35,6 @@ export default function Checkout() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [razorpayOrderData, setRazorpayOrderData] = useState(null);
-  const [showSimulator, setShowSimulator] = useState(false);
 
   const isCartEmpty = !cartLoading && cartItems.length === 0;
 
@@ -118,122 +117,77 @@ export default function Checkout() {
         throw new Error(res.data?.message || 'Failed to initialize payment gateway.');
       }
 
-      const { razorpayOrderId, shopKartOrderId, amount, currency, keyId } = res.data;
+      const { razorpayOrderId, shopKartOrderId, amount, currency, key, keyId } = res.data;
+      const actualKey = key || keyId;
 
       setRazorpayOrderData({
         razorpayOrderId,
         shopKartOrderId,
         amount,
         currency,
-        keyId,
+        keyId: actualKey,
       });
 
-      // Step 2: Try to launch Razorpay Modal SDK
+      // Step 2: Ensure Razorpay SDK is loaded
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        setShowSimulator(true);
-        return;
+        throw new Error('Razorpay SDK failed to load. Please check your internet connection.');
       }
 
-      try {
-        const options = {
-          key: keyId,
-          amount: amount,
-          currency: currency || 'INR',
-          name: 'ShopKart Online Store',
-          description: `Order #${shopKartOrderId}`,
-          order_id: razorpayOrderId,
-          prefill: {
-            name: formData.fullName,
-            contact: formData.phone,
-          },
-          theme: {
-            color: '#2874f0',
-          },
-          handler: async function (response) {
-            try {
-              const verifyRes = await api.post('/orders/verify-payment', {
-                shopKartOrderId: shopKartOrderId,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              });
+      // Step 3: Open Razorpay Checkout Modal
+      const options = {
+        key: actualKey,
+        amount: amount,
+        currency: currency || 'INR',
+        name: 'ShopKart Online Store',
+        description: `Order #${shopKartOrderId}`,
+        order_id: razorpayOrderId,
+        prefill: {
+          name: formData.fullName,
+          contact: formData.phone,
+        },
+        theme: {
+          color: '#2874f0',
+        },
+        handler: async function (response) {
+          try {
+            const verifyRes = await api.post('/orders/verify-payment', {
+              shopKartOrderId: shopKartOrderId,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
 
-              if (verifyRes.data?.success) {
-                await fetchCart();
-                navigate(`/order-success/${shopKartOrderId}`);
-              } else {
-                setSubmitError(verifyRes.data?.message || 'Payment verification failed.');
-              }
-            } catch (vErr) {
-              setSubmitError(vErr.response?.data?.message || 'Error verifying payment signature');
+            if (verifyRes.data?.success) {
+              await fetchCart();
+              navigate(`/order-success/${shopKartOrderId}`);
+            } else {
+              setSubmitError(verifyRes.data?.message || 'Payment verification failed.');
             }
+          } catch (vErr) {
+            setSubmitError(vErr.response?.data?.message || 'Error verifying payment signature');
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setIsSubmitting(false);
+            setSubmitError('Payment was cancelled or modal was closed. You can retry payment below.');
           },
-          modal: {
-            ondismiss: function () {
-              setIsSubmitting(false);
-              setSubmitError('Payment modal was closed. You can retry payment below.');
-            },
-          },
-        };
+        },
+      };
 
-        const paymentObject = new window.Razorpay(options);
-        paymentObject.on('payment.failed', function (failRes) {
-          setSubmitError(
-            `Payment failed: ${failRes.error?.description || 'Transaction declined'}. Cart preserved.`
-          );
-          setIsSubmitting(false);
-        });
-        paymentObject.open();
-      } catch (openErr) {
-        setShowSimulator(true);
-      }
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.on('payment.failed', function (failRes) {
+        setSubmitError(
+          `Payment failed: ${failRes.error?.description || 'Transaction declined'}. Cart preserved.`
+        );
+        setIsSubmitting(false);
+      });
+      paymentObject.open();
     } catch (err) {
       console.error('Order creation error:', err);
       const msg = err.response?.data?.message || err.message || 'Unable to place order';
       setSubmitError(msg);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Helper for direct test simulation (ideal for Viva demo / offline testing)
-  const handleSimulatePayment = async (status) => {
-    if (!razorpayOrderData) return;
-    setIsSubmitting(true);
-    setSubmitError('');
-
-    try {
-      if (status === 'success') {
-        const testPaymentId = `pay_sim_${Date.now()}`;
-        const verifyRes = await api.post('/orders/verify-payment', {
-          shopKartOrderId: razorpayOrderData.shopKartOrderId,
-          razorpay_order_id: razorpayOrderData.razorpayOrderId,
-          razorpay_payment_id: testPaymentId,
-          razorpay_signature: 'simulated_test_signature',
-        });
-
-        if (verifyRes.data?.success) {
-          setShowSimulator(false);
-          await fetchCart();
-          navigate(`/order-success/${razorpayOrderData.shopKartOrderId}`);
-        } else {
-          setSubmitError(verifyRes.data?.message || 'Verification failed');
-        }
-      } else if (status === 'fail_signature') {
-        await api.post('/orders/verify-payment', {
-          shopKartOrderId: razorpayOrderData.shopKartOrderId,
-          razorpay_order_id: razorpayOrderData.razorpayOrderId,
-          razorpay_payment_id: 'pay_tampered_123',
-          razorpay_signature: 'tampered_bad_signature',
-        });
-      } else {
-        setShowSimulator(false);
-        setSubmitError('Payment was cancelled or failed. Your cart items are preserved.');
-      }
-    } catch (err) {
-      setSubmitError(err.response?.data?.message || 'Payment simulation failed');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -547,64 +501,6 @@ export default function Checkout() {
             </div>
           </div>
         </div>
-
-        {/* --- RAZORPAY TEST SIMULATOR MODAL --- */}
-        {showSimulator && razorpayOrderData && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg max-w-md w-full p-6 space-y-4 shadow-2xl border border-gray-200">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded bg-[#2874f0] text-white flex items-center justify-center font-bold text-sm">
-                    ₹
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-800 text-sm">Razorpay Payment Gateway</h3>
-                    <p className="text-[11px] text-gray-500">Test Simulation Mode</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowSimulator(false)}
-                  className="text-gray-400 hover:text-gray-600 cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="bg-gray-50 p-3 rounded text-xs space-y-1 text-gray-700">
-                <div className="flex justify-between">
-                  <span>Order ID:</span>
-                  <span className="font-mono">{razorpayOrderData.shopKartOrderId}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Payable Amount:</span>
-                  <span className="font-bold text-gray-900">₹{(razorpayOrderData.amount / 100).toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-
-              <p className="text-xs text-gray-600">
-                Live Razorpay popup was simulated. Select a test outcome to complete your order verification:
-              </p>
-
-              <div className="space-y-2 pt-1">
-                <button
-                  onClick={() => handleSimulatePayment('success')}
-                  disabled={isSubmitting}
-                  className="w-full py-2.5 rounded font-bold text-xs text-white bg-green-600 hover:bg-green-700 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <span>✓ Simulate Successful Payment</span>
-                </button>
-
-                <button
-                  onClick={() => handleSimulatePayment('failed')}
-                  disabled={isSubmitting}
-                  className="w-full py-2 rounded font-semibold text-xs text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all cursor-pointer"
-                >
-                  Simulate Payment Cancel / Fail
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

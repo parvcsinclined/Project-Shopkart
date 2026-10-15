@@ -42,12 +42,16 @@ registerRoutes('');
 const PORT = process.env.PORT || 5000;
 
 const connectDB = async () => {
+  const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/shopkart';
+  const isCloudUri = uri.includes('mongodb+srv') || uri.includes('mongodb.net');
+  const timeoutMs = isCloudUri ? 15000 : 4000;
+
   try {
-    const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/shopkart';
-    await mongoose.connect(uri, { serverSelectionTimeoutMS: 4000 });
+    console.log(`Connecting to MongoDB (${isCloudUri ? 'Cloud Atlas' : 'Local'})...`);
+    await mongoose.connect(uri, { serverSelectionTimeoutMS: timeoutMs });
     console.log('Connected to MongoDB');
   } catch (err) {
-    console.warn('MongoDB Atlas connection failed/timed out:', err.message);
+    console.warn('Primary MongoDB connection failed:', err.message);
     try {
       console.log('Trying local MongoDB fallback (mongodb://127.0.0.1:27017/shopkart)...');
       await mongoose.connect('mongodb://127.0.0.1:27017/shopkart', { serverSelectionTimeoutMS: 3000 });
